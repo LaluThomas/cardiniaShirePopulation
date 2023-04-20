@@ -60,7 +60,7 @@ library("Census2016")
 
 #Read in the SA2 shapefile downloaded from the ABS
 aus_sa2_shp <- 
-  read_sf("C:/Users/thomaslal/OneDrive - cardinia.vic.gov.au/Desktop/Desktop folders/RPractices/Cardinia_Shire_Population_Contur_io_data/data/SA2_2016_AUST.shp")
+  read_sf("./data/SA2_2016_AUST.shp")
 
 #filter the Australian SA2 shapefile for only Victoria
 aus_sa2_vic_shp <- aus_sa2_shp %>%
@@ -84,10 +84,55 @@ my_plot <- ggplot() +
      
   )
 
-ggsave("C:/Users/thomaslal/OneDrive - cardinia.vic.gov.au/Desktop/Desktop folders/RPractices/Cardinia_Shire_Population_Contur_io_data/my_plot.png", my_plot, width = 8, height = 6, dpi = 300)
+#my_plot
+
+#ggsave("C:/Users/thomaslal/OneDrive - cardinia.vic.gov.au/Desktop/Desktop folders/RPractices/Cardinia_Shire_Population_Contur_io_data/my_plot.png", my_plot, width = 8, height = 6, dpi = 300)
 
 #import a shapefile of state boundaries
 AUS_STATE_shp <- read_sf("./data/STE_2021_AUST_GDA2020.shp")
+
+Aus_States <- ggplot()+
+  geom_sf(data=AUS_STATE_shp)+
+  ggtitle("Australia")+
+  xlab("Longitude")+
+  ylab("Latitude")+
+  theme_bw()
+
+Aus_States
+
+#make a new dataset of cities in Australia (google the locations)
+
+AUS_Cities <- tibble(
+  city = c("Brisbane", "Sydney", "Melbourne", "Perth", "Adelaide",
+           "Gold Coast", "Canberra", "Hobart", "Darwin", "Alice Springs"),
+  lat = c(-27.4698, -33.8688, -37.8136, -31.9522, -34.9289,
+          -28.0167, -35.2931, -42.8806, -12.4381, -23.7000),
+  long = c(153.0251, 151.2093, 144.9631, 115.8589, 138.6011,
+           153.4000, 149.1269, 147.3250, 130.8411, 133.8667)
+)
+
+
+#convert those Lat Long columns to geometry column with the st_as_sf() 
+#function. Google Maps uses the coordinate reference system 4326 (the GPS system).
+
+
+AUS_Cities_Geometry <- st_as_sf(
+  AUS_Cities, 
+  coords = c("long", "lat"), 
+  crs = 4326
+)
+
+ggplot()+
+  geom_sf(data = AUS_STATE_shp, aes(fill="city"), color="black")+
+  geom_sf(data=AUS_Cities_Geometry, aes(color="city"), size=3)+
+  geom_sf_label(data=AUS_Cities_Geometry, aes(label=city), size=3, color="black")+
+  scale_color_brewer(type = "qual", palette = "Set1") +
+  scale_fill_viridis_d() +
+  xlab("Longitude")+
+  ylab("Latitude")+
+  theme_bw()
+
+
 
 #import a shapefile of Australian electorates
 AUS_CED_shp <- read_sf("./data/CED_2021_AUST_GDA2020.shp")
