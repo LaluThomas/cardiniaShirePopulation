@@ -122,16 +122,17 @@ AUS_Cities_Geometry <- st_as_sf(
   crs = 4326
 )
 
-ggplot()+
-  geom_sf(data = AUS_STATE_shp, aes(fill="city"), color="black")+
-  geom_sf(data=AUS_Cities_Geometry, aes(color="city"), size=3)+
-  geom_sf_label(data=AUS_Cities_Geometry, aes(label=city), size=3, color="black")+
+ggplot() +
+  geom_sf(data = AUS_STATE_shp, aes(fill="city"), color="black") +
+  geom_sf(data = AUS_Cities_Geometry, aes(color="city"), size=3) +
+  geom_sf_label(data = AUS_Cities_Geometry, aes(label = city), 
+                size = 3, color = "black", 
+                fun.geometry = st_centroid) + # Change this line
   scale_color_brewer(type = "qual", palette = "Set1") +
   scale_fill_viridis_d() +
-  xlab("Longitude")+
-  ylab("Latitude")+
+  xlab("Longitude") +
+  ylab("Latitude") +
   theme_bw()
-
 
 
 #import a shapefile of Australian electorates
