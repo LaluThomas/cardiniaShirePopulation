@@ -57,6 +57,8 @@ library(magick)
 #library(raustats) #not available
 library(purrr)
 library("Census2016")
+library(scales)
+library(viridis)
 
 #Read in the SA2 shapefile downloaded from the ABS
 aus_sa2_shp <- 
@@ -144,23 +146,56 @@ head(AUS_STATE_shp)
 head(AUS_CED_shp)
 
 #filter the shapefile for Victoria only
-AUS_STATE_VIC_shp <- AUS_STATE_shp %>%
-  filter(STE_CODE21==2)
 
 
-victoria <- ggplot() +
-  geom_sf(data=AUS_STATE_VIC_shp)+
-  ggtitle("Victoria") +
-  xlab("Longitude") +
-  ylab("Latitude") + 
-  theme_bw()
+AUS_LGA <- read_sf("./data/LGA_2022_AUST_GDA2020.shp")
+
+AUS_LGA_Victoria <- AUS_LGA %>% 
+  filter(STE_NAME21 == "Victoria")
 
 
-#run a spatial intersection for the state of Victoria and all electorates
-VIC_CED <- st_intersection(AUS_STATE_VIC_shp, AUS_CED_shp)
-ggplot() +
-  geom_sf(data=VIC_CED)+
-  ggtitle("Commonwealth Electoral Divisions in Victoria") +
-  xlab("Longitude") +
-  ylab("Latitude") + 
-  theme_bw()
+# VIC_LGA <- st_intersection(AUS_STATE_VIC_shp,AUS_LGA_Victoria) 
+
+
+AUS_LGA_Victoria <- AUS_LGA_Victoria %>% 
+  filter(!LGA_CODE22=="29799" , !LGA_CODE22=="29499" )
+
+lga_total_population <- read_csv("./data/lga_population.csv")
+
+lga_total_population <- lga_total_population %>% 
+  filter(!LGA_CODE_2021=="LGA29799" , !LGA_CODE_2021=="LGA29499" )
+
+lga_total_population$LGA_Code <- substr(lga_total_population$LGA_CODE_2021,4,(nchar(lga_total_population$LGA_CODE_2021)))
+
+lga_total_population <- lga_total_population %>% 
+  select(
+    c(
+      Tot_P_M,
+      Tot_P_F,
+      Tot_P_P,
+      LGA_Code
+    )
+  )
+
+AUS_LGA_Victoria <- AUS_LGA_Victoria %>% 
+  mutate(
+    LGA_Code=LGA_CODE22
+  )
+
+AUS_LGA_Victoria <- left_join(AUS_LGA_Victoria,lga_total_population,by="LGA_Code")
+
+options(scipen=999)
+
+VIC_LGA_Population <- ggplot() +
+  geom_sf(data = AUS_LGA_Victoria,
+          aes(fill = Tot_P_P)) +
+  scale_fill_viridis_c(name = "Population",
+                       labels = comma) +
+  labs(title = "2021 Census - Victorian LGA's population",
+       subtitle = "Data Source: Australian Bureau of Statistics",
+       x = "Longitude",
+       y = "Latitude") +
+  theme_bw() +
+  theme(legend.position = "right")
+
+ggsave("VIC_LGA_Population.png", VIC_LGA_Population, width = 8, height = 6, dpi = 300)
